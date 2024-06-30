@@ -7,14 +7,55 @@ from flask_migrate import Migrate
 from models import db, Pet
 
 app = Flask(__name__)
+
+# Is set up to point to our existing database
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
+
+# This is set to False to avoid building up too much unnecessary data in memory
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 migrate = Migrate(app, db)
 
 db.init_app(app)
 
-# add views here 
+# add views here
+
+
+@app.route('/')
+def index():
+    response = make_response(
+        '<h1>Welcome to the pet directory!</h1>'
+    )
+    return response
+
+
+@app.route('/pets/<int:id>')
+def pet_by_id(id):
+    pet = Pet.query.filter(Pet.id == id).first()
+
+    if pet:
+        response_body = f'<p>{pet.name} {pet.species}</p>'
+        response_status = 200
+
+    else:
+        response_body = f'<pet>Pet {id} not found'
+        response_status = 404
+
+    response = make_response(response_body, response_status)
+    return response
+
+@app.route('/species/<string:species>')
+def pet_by_species(species):
+    
+    pets = Pet.query.filter_by(species=species).all()
+    
+    size = len(pets)
+    response_body = f'<h2>There are {size} {species}s</h2>'
+    for pet in pets:
+        response_body += f'<p>{pet.name}</p>'
+    response =make_response(response_body,200)
+    return response
+
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
